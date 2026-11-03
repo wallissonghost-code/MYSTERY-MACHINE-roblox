@@ -39,14 +39,29 @@ end
 local function save(player)
     local profile = profiles[player]
     if not profile or profile.readOnly then return false end
-    local payload = snapshot(profile)
-    local ok, err = pcall(function()
-        store:UpdateAsync("player_"..player.UserId, function()
-            return payload
+    profile.saveRequested = true
+    if profile.saving then
+        while profile.saving do task.wait(0.1) end
+        if not profile.saveRequested then return true end
+    end
+    profile.saving = true
+    local success = true
+    repeat
+        profile.saveRequested = false
+        local payload = snapshot(profile)
+        local ok, err = pcall(function()
+            store:UpdateAsync("player_"..player.UserId, function()
+                return payload
+            end)
         end)
-    end)
-    if not ok then warn("Mystery Machine: save failed", player.UserId, err) end
-    return ok
+        if not ok then
+            warn("Mystery Machine: save failed", player.UserId, err)
+            success = false
+            break
+        end
+    until not profile.saveRequested
+    profile.saving = false
+    return success
 end
 
 local function countItems(profile)
