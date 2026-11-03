@@ -76,6 +76,7 @@ local activeModel = nil
 local spinConnection = nil
 local token = 0
 local pending = {}
+local showPrize
 local function dismiss()
     token += 1
     if spinConnection then spinConnection:Disconnect() spinConnection = nil end
@@ -87,7 +88,7 @@ local function dismiss()
     end
 end
 close.MouseButton1Click:Connect(dismiss)
-function showPrize(prize)
+showPrize = function(prize)
     token += 1
     local current = token
     if spinConnection then spinConnection:Disconnect() spinConnection = nil end
