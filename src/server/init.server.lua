@@ -10,6 +10,7 @@ local profiles = {}
 local busy = {}
 local lastOpen = {}
 local lastSell = {}
+local FREE_COINS, REWARD_COOLDOWN = 50, 180
 local remotes = Instance.new("Folder")
 remotes.Name = "MysteryMachineRemotes"
 remotes.Parent = ReplicatedStorage
@@ -25,7 +26,7 @@ local function snapshot(profile)
     for id, quantity in pairs(profile.inventory) do
         if Items.byId[id] and quantity > 0 then inventory[id] = quantity end
     end
-    return {coins=profile.coins, inventory=inventory, discovered=profile.discovered}
+    return {coins=profile.coins, inventory=inventory, discovered=profile.discovered, lastClaim=profile.lastClaim or 0}
 end
 
 local function broadcast(player, prize)
@@ -68,6 +69,21 @@ local function useMachine(player)
     profile.discovered[prize.id] = true
     broadcast(player, {id=prize.id, name=prize.name, rarity=prize.rarity, value=prize.value})
     busy[player] = nil
+    task.spawn(save, player)
+end
+
+local function claimCoins(player)
+    local profile = profiles[player]
+    if not profile or profile.readOnly or busy[player] then return end
+    local now = os.time()
+    if now - (profile.lastClaim or 0) < REWARD_COOLDOWN then
+        message(player, "Recompensa ainda não disponível.")
+        return
+    end
+    profile.lastClaim = now
+    profile.coins += FREE_COINS
+    broadcast(player)
+    message(player, "+50 Coins grátis!")
     task.spawn(save, player)
 end
 
@@ -154,7 +170,7 @@ end
 
 Players.PlayerAdded:Connect(function(player)
     local ok, data = pcall(function() return store:GetAsync("player_"..player.UserId) end)
-    local profile = {coins=STARTING_COINS, inventory={}, discovered={}, readOnly=not ok}
+    local profile = {coins=STARTING_COINS, inventory={}, discovered={}, lastClaim=0, readOnly=not ok}
     if ok and typeof(data) == "table" then
         if typeof(data.coins) == "number" then profile.coins = math.max(0, math.floor(data.coins)) end
         if typeof(data.inventory) == "table" then
@@ -164,6 +180,7 @@ Players.PlayerAdded:Connect(function(player)
                 end
             end
         end
+        if typeof(data.lastClaim) == "number" then profile.lastClaim = math.floor(data.lastClaim) end
         if typeof(data.discovered) == "table" then
             for id, found in pairs(data.discovered) do
                 if Items.byId[id] and found == true then profile.discovered[id] = true end
@@ -181,7 +198,8 @@ action.OnServerEvent:Connect(function(player, verb, id)
         local character = player.Character
         local root = character and character:FindFirstChild("HumanoidRootPart")
         if root and (root.Position - Vector3.new(0,3,-8)).Magnitude <= 18 then useMachine(player) end
-    elseif verb == "Sell" then sell(player, id) end
+    elseif verb == "Sell" then sell(player, id)
+    elseif verb == "ClaimFree" then claimCoins(player) end
 end)
 Players.PlayerRemoving:Connect(function(player)
     save(player)
