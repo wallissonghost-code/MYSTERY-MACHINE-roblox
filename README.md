@@ -1,14 +1,17 @@
 # Mystery Machine — Máquina Surpresa 🎁
 
-Primeiro protótipo jogável de coleção RNG para **Roblox Studio**, desenvolvido em **Luau**.
+Protótipo V0.2 de coleção RNG para **Roblox Studio**, desenvolvido em **Luau**.
 
-## Já implementado (código inicial, ainda não testado no Studio)
+## Já implementado no código (ainda não testado no Studio)
 
 - Máquina de cápsulas 3D gerada automaticamente no mapa, com ProximityPrompt.
 - Sorteio no servidor de **20 objetos colecionáveis** (catálogo em `src/shared/Items.lua`).
 - Custo de abertura: **25 Coins**; saldo inicial: **250 Coins**.
 - Inventário por quantidade, venda individual e índice de objetos descobertos.
 - HUD com saldo, abrir cápsula, coleção e notificações de prêmio.
+- **20 modelos 3D estilizados criados via Parts**, exibidos em um painel ViewportFrame com rotação ao ganhar prêmio.
+- Botão de recompensa gratuita: **50 Coins a cada 180 segundos**, validado pelo servidor.
+- Gravações por jogador serializadas para reduzir o risco de snapshots antigos sobrescreverem os novos.
 - Dados básicos persistidos em DataStoreService. Se o carregamento falhar, as operações econômicas são bloqueadas para evitar sobrescrita de dados.
 - Verificações de saldo, lotação (150 itens), propriedade dos itens, distância da máquina e cooldown.
 
@@ -32,12 +35,16 @@ Para salvar dados durante testes no Studio, publique uma experiência de teste e
 
 Crie os seguintes scripts manualmente, copiando o conteúdo dos arquivos:
 - `ReplicatedStorage/Shared/Items` (ModuleScript)
+- `ReplicatedStorage/Shared/PrizeModels` (ModuleScript)
 - `ServerScriptService/MysteryMachineServer` (Script)
 - `StarterPlayer/StarterPlayerScripts/MysteryMachineClient` (LocalScript)
+- `StarterPlayer/StarterPlayerScripts/PrizePresentation` (LocalScript)
 
 ## Arquitetura
 
 - `src/shared/Items.lua`: definições, valores, raridades e pesos de sorteio.
+- `src/shared/PrizeModels.lua`: modelos 3D procedurais dos 20 prêmios.
+- `src/client/prize.client.lua`: apresentação animada com ViewportFrame.
 - `src/server/init.server.lua`: mundo 3D inicial, economia, abertura, venda e persistência.
 - `src/client/init.client.lua`: HUD responsivo e inventário.
 - `default.project.json`: projeto Rojo.
@@ -46,9 +53,10 @@ Crie os seguintes scripts manualmente, copiando o conteúdo dos arquivos:
 
 - Modelos originais 3D reconhecíveis para cada objeto, em vez de apenas representações no inventário.
 - Animação da cápsula e interface com chances numéricas por objeto.
-- Missões e recuperação gratuita de moedas (hoje é possível esgotar o saldo).
+- Missões, ajustes de balanceamento e recompensas visuais mais elaboradas.
 - Vitrines, melhorias, novas máquinas, rankings e economia balanceada.
-- Melhorar consistência das transações e controle de sessão entre servidores antes de publicar.
+- Adicionar bloqueio de sessão entre servidores e recuperação/reconciliação robusta de transações antes de publicar.
+- Verificar a apresentação e interação dos modelos de cada item no Roblox Studio.
 
 ## Uso de componentes e licença
 
